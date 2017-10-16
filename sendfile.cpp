@@ -1,3 +1,4 @@
+#include <iostream>
 #include <stdio.h>
 #include <netdb.h>
 #include <stdlib.h>
@@ -11,7 +12,18 @@ using namespace std;
 
 #define SERVICE_PORT	21234
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
+
+    // Handle user parameter
+    if (argc == 2 && memcmp("-h", argv[1], 2) == 0) {
+        cout << "   NoName4 Sliding Window Instruction" << endl;
+        cout << "   Execute this program with this command:" << endl;
+        cout << "   ./sendfile <filename> <windowsize> <buffersize> <destination_ip> <destination_port>" << endl << endl;
+        exit(0);
+    } else if (argc != 5) {
+        cout << "Wrong parameter!" << endl;
+        exit(0);
+    }
     
     int fd;
     struct sockaddr_in address, remoteAddress;
