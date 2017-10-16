@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdlib>
+#include <fstream>
 #include <stdio.h>
 #include <netdb.h>
 #include <stdlib.h>
@@ -38,6 +39,15 @@ int main(int argc, char *argv[]) {
         strcpy(destinationIP, argv[4]);
         destinationPort = atoi(argv[5]);
     }
+
+
+    // Read file
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cout << "Unable to read " << filename << endl;
+        exit(0);
+    }
+
     
     int fd;
     struct sockaddr_in address, remoteAddress;
@@ -78,12 +88,13 @@ int main(int argc, char *argv[]) {
 
     // Sending messages
     cout << "Sending file " << filename << " to " << destinationIP << ":" << destinationPort << " (" << windowsize << ", " << buffersize << ")" << endl;
-    for (int i = 0; i < 5; i++) {
-        printf("Sending packet %d to %s port %d\n", i, server, destinationPort);
-        sprintf(message, "Hello network! %d", i);
-        if (sendto(fd, message, strlen(message), 0, (struct sockaddr *) &remoteAddress, sizeof(remoteAddress)) == -1)
+    char ch;
+    while (file.get(ch)) {
+        printf("Sending packet (%c) to %s port %d\n", ch, server, destinationPort);
+        if (sendto(fd, &ch, 1, 0, (struct sockaddr *) &remoteAddress, sizeof(remoteAddress)) == -1)
             perror("sendto error");
     }
+    file.close();
 
     close(fd);
     return 0;
