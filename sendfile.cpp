@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
     unsigned char buf[BUFFER_SIZE];
     char SendBuffer[BUFFER_SIZE];
     char ch;
-    int seq;
+    int seq = 0;  
 
     // Pindahin file bertahap ke buffer
     // Tunggu sampai buffer penuh atau file selesai, kemudian kirim
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 
         if (last_sent < 255 && last_sent <= last_ack + windowsize) {
             char c = buffer.at(++last_sent);
-            printf("Sending packet %d (%c) to %s port %d\n", seq++, c, server, destinationPort);
+            printf("Sending packet %d (%c) to %s port %d\n", seq+1, c, server, destinationPort);
             Segment segmentData(seq++, c);
             char* buffer = segmentData.toBuffer();
             for(int i = 0; i < 9; i++) {
@@ -130,11 +130,11 @@ int main(int argc, char *argv[]) {
             }
             printf("\n");
             usleep((rand() % 10 + 1) * 100000);
-            if (sendto(fd, &buffer, 9, 0, (struct sockaddr *) &remoteAddress, sizeof(remoteAddress)) == -1)
+            if (sendto(fd, buffer, 9, 0, (struct sockaddr *) &remoteAddress, sizeof(remoteAddress)) == -1)
                 perror("Error sending packet");
         }
 
-        int recvlen = recvfrom(fd, buf, BUFFER_SIZE, 0, (struct sockaddr *)&remoteAddress, &addrlen);
+        int recvlen = recvfrom(fd, &buf, BUFFER_SIZE, 0, (struct sockaddr *)&remoteAddress, &addrlen);
         if (recvlen > 0) {
             int ack = buf[0];
             printf("Received ACK : %d\n", ack);

@@ -4,6 +4,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <vector>
 
 #include "buffer.h"
 #include "packetAck.h"
@@ -12,6 +13,7 @@
 #define SERVICE_PORT	21234
 #define BUFSIZE 256
 
+vector<char> receiveBuffer;
 
 void initAddress(sockaddr_in* address) {
 	memset((char *) &(*address), 0, sizeof(address));
@@ -42,43 +44,49 @@ int main(int argc, char **argv) {
 	socklen_t addrlen = sizeof(remaddr);
 	unsigned char buf[BUFSIZE];
 
-
-	
 	int recvlen;
 	int fd;
 
 	initAddress(&address);
 	initSocket(&fd, address);
 
+	getData();
+
 	// Listening to incoming message
 	printf("Listening on port %d\n", SERVICE_PORT);
-	int last_ack = 0;
+	unsigned char last_ack = 0;
 	int windowsize = 10;
 	int LFR = -1;
-	int LAR = LFR + windowsize;
+	int LAF = LFR + windowsize;
 	while (true) {
 		
 		recvlen = recvfrom(fd, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &addrlen);
 		printf("Received %d bytes\n", recvlen);
-
-		for(int i = 0; i < recvlen; i++) {
-			printf("%d ", buf[i]);
-		}
-		printf("\n");
 		
 		if (recvlen > 0) {
-			buf[recvlen] = 0;
-			printf("Received message: \"%s\" \n", buf);
+			
+			Segment segment(buf);
 
-			// Add message to receive buffer
-
-			// Send ACK
-			char x = last_ack++;
-			if (sendto(fd, &x, 1, 0, (struct sockaddr *) &remaddr, addrlen) == -1)
-				perror("Error sending ACK");
+			if (segment.getSeqNumb() > LFR && segment.getSeqNumb() < LAF) {
+				printf("Received message: \"%c\" with seqNumber %d\n", segment.getData(), segment.getSeqNumb());
+				
+				// Add message to receive buffer
+				receiveBuffer.push_back(segment.getData());
+	
+				// Send ACK
+				PacketAck packetAck(segment.getSeqNumb()+1, windowsize);
+				unsigned char x = last_ack++;
+				if (sendto(fd, &x, 1, 0, (struct sockaddr *) &remaddr, addrlen) == -1)
+					perror("Error sending ACK");	
+			}
 
 		}
+
 	}
 	
 
+}
+
+void recv_data() {
+	receiveBuffer.pop_back();
 }

@@ -59,6 +59,17 @@ class Segment {
       return buffer;
     }
 
+    Segment(unsigned char* buffer) {
+      int seqNmbr = ((buffer[1] << 24) | (buffer[2] << 16) | (buffer[3] << 8) | buffer[4]);
+      int data = buffer[6];
+      soh = 0x1;
+      this->seqNumb = seqNmbr;
+      stx = 0x2;
+      this->data = data;
+      etx = 0x3;
+      checksum = checkSumSeg();
+    }
+
 };
 
 #endif
